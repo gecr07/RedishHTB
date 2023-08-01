@@ -207,6 +207,8 @@ done
 
 ```
 
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/76cff56c-b1ea-4f6a-8862-9722a7d467c7)
+
 
 
 
