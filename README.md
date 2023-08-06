@@ -28,7 +28,7 @@ Una vez dentro pues nos damos cuenta que la shell esta muy precaria ( y asi lo h
 
 ![image](https://github.com/gecr07/RedishHTB/assets/63270579/484e0234-1c4e-4ba5-b818-23bd4fb61d5a)
 
-Descubrimiento de puertos.
+## Descubrimiento de puertos.
 
 ```
 #!/bin/bash                                                                                                           │    for i in $(seq 1 254); do
@@ -49,6 +49,28 @@ done;wait                                                                       
 done                                                                                                                  │
                                                                                                                       │
 echo "Este es el final" 
+```
+
+```
+#!/bin/bash
+
+echo "Hola estoy dentro"
+
+networks=(172.19.0 172.18.0)
+
+
+
+for  network in ${networks[@]}; do
+echo "[+] Estoy escaneo  la red $network.0/24"
+for i in $(seq 1 254); do
+
+        timeout 1 bash -c "ping -c 1  $network.$i" &>/dev/null && echo " [+] La ip $network.$i -ACTIVE" &
+
+done;wait 
+done
+
+echo "Este es el final"
+
 ```
 
 ## Alternativa
