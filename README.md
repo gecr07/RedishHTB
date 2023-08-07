@@ -81,10 +81,10 @@ Cabe destacar que el puerto 1880 fue por donde entramos del nodered s4vitar dice
 
 ```
 cat ports.sh| base64 -w0 | xclip -sel clip
+ base64  ports.sh -w0 | xclip -sel clip # es completamente lo mismo.
 ```
 
 Con la opcion -w0 nos imprime todo sin saltos de linea y da menos error intentar usar este en la medida de lo posible.
-
 
 ## Alternativa
 
