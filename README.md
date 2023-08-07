@@ -439,7 +439,8 @@ Finalmente:
 
 Podemos ver todas las interfaces que arrastra esta maquina.
 
-![image](https://github.com/gecr07/RedishHTB/assets/63270579/35b56a8d-315a-4e3e-8dcc-6d6293aee67b)
+![image](https://github.com/gecr07/RedishHTB/assets/63270579/98a8decb-3f1f-4680-8c8f-f29dc2771089)
+
 
 
 FIN...
