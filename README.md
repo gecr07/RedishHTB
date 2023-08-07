@@ -28,35 +28,14 @@ Una vez dentro pues nos damos cuenta que la shell esta muy precaria ( y asi lo h
 
 ![image](https://github.com/gecr07/RedishHTB/assets/63270579/484e0234-1c4e-4ba5-b818-23bd4fb61d5a)
 
-## Descubrimiento de puertos.
-
-```
-#!/bin/bash                                                                                                           │    for i in $(seq 1 254); do
-                                                                                                                      │        bash -c "ping -c 1 $networks.$i" &>/dev/null && echo -e "\t[+] Host $network.$i -ACTIVE" &
-echo "Hola estoy dentro"                                                                                              │        echo "Estoy dentro del for interno Funciona..."
-                                                                                                                      │
-networks=(172.19.0 172.18.0)                                                                                          │    done; wait 
-                                                                                                                      │
-                                                                                                                      │done; tput cnorm
-                                                                                                                      │
-for  network in ${networks[@]}; do                                                                                    │
-echo "[+] Estoy escaneo  la red $network.0/24"                                                                        │
-for i in $(seq 1 254); do                                                                                             │
-                                                                                                                      │                                                                                                                     
-        timeout 1 bash -c "ping -c 1  $network.$i" &>/dev/null && echo " [+] La ip $network.$i -ACTIVE" &             │┌──(kali㉿kali)-[~/RedishHTB/content]
-                                                                                                                      │└─$ 
-done;wait                                                                                                             │
-done                                                                                                                  │
-                                                                                                                      │
-echo "Este es el final" 
-```
+## Descubrimiento de IPs vivas.
 
 ```
 #!/bin/bash
 
 echo "Hola estoy dentro"
 
-networks=(172.19.0 172.18.0)
+networks=(172.20.0.3)
 
 
 
@@ -65,6 +44,30 @@ echo "[+] Estoy escaneo  la red $network.0/24"
 for i in $(seq 1 254); do
 
         timeout 1 bash -c "ping -c 1  $network.$i" &>/dev/null && echo " [+] La ip $network.$i -ACTIVE" &
+
+done;wait 
+done
+
+echo "Este es el final"
+
+```
+
+## Puertos Abiertos
+
+```
+#!/bin/bash
+
+echo "Hola estoy dentro"
+
+hosts=(172.18.0.1 172.18.0.2 172.19.0.1 172.19.0.2 172.19.0.3 172.19.0.4)
+
+
+
+for  host in ${hosts[@]}; do
+echo "[+] Estoy escaneo  la red $host"
+for port in $(seq 1 10000); do
+
+        timeout 1 bash -c "echo '' > /dev/tcp/$host/$port" 2>/dev/null && echo " [+] Port $port - OPEN" &
 
 done;wait 
 done
