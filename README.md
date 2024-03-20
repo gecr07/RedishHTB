@@ -365,7 +365,7 @@ Ahora como podemos leer y escribir con RSYNC podemos inyectar una tarea cron y p
 Ahora como no tenemos conectividad hasta esa maquina el SOCAT tambien puede servir de nc(por lo que puedo entender)
 
 ```
-./socat TCP-LISTEN:5555
+./socat TCP-LISTEN:5555 stdout
 ```
 
 Insertando una tarea cron:
