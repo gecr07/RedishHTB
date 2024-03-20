@@ -447,6 +447,11 @@ FIN...
 
 
 
+# Bibliografia de PortFowarding
+
+> https://deephacking.tech/pivoting-con-proxychains/
+
+> https://deephacking.tech/pivoting-con-ssh/
 
 
 
